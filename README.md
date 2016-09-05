@@ -1,6 +1,6 @@
 # elli_fileserve
 
-[![Build Status](https://travis-ci.org/yurrriq/elli_fileserve.svg?branch=master)](https://travis-ci.org/yurrriq/elli_fileserve)
+[![Build Status](https://travis-ci.org/elli-lib/elli_fileserve.svg?branch=master)](https://travis-ci.org/elli-lib/elli_fileserve)
 
 *[`elli`][] middleware to serve static files.*
 

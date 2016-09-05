@@ -1,7 +1,7 @@
 -module(elli_fileserve_tests).
 -include_lib("eunit/include/eunit.hrl").
 
--define(TEST_DIR, (filename:absname(<<".">>))).
+-define(TEST_DIR, (list_to_binary(filename:dirname(code:which(?MODULE))))).
 -define(TEST_FILE, (filename:basename(list_to_binary(?FILE)))).
 -define(TEST(FunName, Arg), {lists:flatten(io_lib:format("~s ~p", [FunName, Arg])), ?_test(FunName(Arg))}).
 
