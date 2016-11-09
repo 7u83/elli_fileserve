@@ -12,9 +12,6 @@
 
 -export([handle/2, handle_event/3]).
 
-%% exported for mockability in tests (called through ?MODULE)
--export([file_size/1]).
-
 -import(filename, [dirname/1, extension/1, flatten/1, join/1]).
 
 -ifdef(TEST).
@@ -28,10 +25,9 @@ handle(Req, Config) ->
         undefined -> ignore;
         FilePath  ->
             Filename = local_path(Config, FilePath),
-            case ?MODULE:file_size(Filename) of
-                {error, illegal_path} -> {403, [], <<"Not Allowed">>};
-                {error, _Reason}      -> {404, [], <<"File Not Found">>};
-                {ok, Size} ->
+            case elli_util:file_size(Filename) of
+                {error, _Reason} -> {404, [], <<"File Not Found">>};
+                Size ->
                     {200, headers(Filename, Size, charset(Config)),
                      {file, Filename}}
             end
@@ -65,7 +61,7 @@ unprefix(RawPath, Prefix) ->
     PrefixSz = size(Prefix),
     case RawPath of
         <<Prefix:PrefixSz/binary, File/binary>> -> File;
-         _                                      -> undefined
+        _                                       -> undefined
     end.
 
 local_path(Config, <<"/", File/binary>>) -> local_path(Config, File);
@@ -80,18 +76,7 @@ local_path(Config, FilePath) ->
                 $/ -> join(flatten([MappedPath, FilePath, default(Config)]));
                 _  -> join(flatten([MappedPath, FilePath]))
             end;
-        _       -> undefined
-    end.
-
-file_size(undefined) -> {error, illegal_path};
-
-file_size(Filename) ->
-    case file:read_file_info(Filename, [{time, posix}]) of
-        {ok, #file_info{type = regular, access = Perm, size = Size}}
-          when Perm =:= read orelse Perm =:= read_write ->
-            {ok, Size};
-        {error, Reason} -> {error, Reason};
-        _               -> {error, invalid_file}
+        _       -> throw({403, [], <<"Not Allowed">>})
     end.
 
 headers(Filename, Size, Charset) ->

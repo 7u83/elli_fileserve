@@ -6,8 +6,8 @@
 -define(TEST(FunName, Arg), {lists:flatten(io_lib:format("~s ~p", [FunName, Arg])), ?_test(FunName(Arg))}).
 
 test_setup() ->
-    Mods = [ [elli_fileserve, [passthrough]]
-           , [elli_request]
+    Mods = [ [elli_request]
+           , [elli_util, [passthrough]]
            ],
     [ {hd(Args), apply(meck, new, Args)} || Args <- Mods ].
 
@@ -34,10 +34,10 @@ test_for_prefix(Prefix) ->
     Config = [{path, ?TEST_DIR}, {prefix, Prefix}],
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/../file.ext">>),
-    ?assertEqual({403, [], <<"Not Allowed">>}, elli_fileserve:handle(req, Config)),
+    ?assertThrow({403, [], <<"Not Allowed">>}, elli_fileserve:handle(req, Config)),
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/non-existing-file.ext">>),
-    ?assertEqual({404, [], <<"File Not Found">>}, elli_fileserve:handle(req, Config)),
+    ?assertMatch({404, [], <<"File Not Found">>}, elli_fileserve:handle(req, Config)),
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/", ?TEST_FILE/binary>>),
     ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
@@ -45,7 +45,7 @@ test_for_prefix(Prefix) ->
                  elli_fileserve:handle(req, Config)),
 
     meck:expect(elli_request, raw_path, 1, <<"/other/prefix/file.ext">>),
-    ?assertEqual(ignore, elli_fileserve:handle(req, Config)).
+    ?assertMatch(ignore, elli_fileserve:handle(req, Config)).
 
 
 test_for_regex_prefix(Prefix) ->
@@ -60,7 +60,7 @@ test_for_regex_prefix(Prefix) ->
 test_default_charset() ->
     Config = [],
     meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
-    meck:expect(elli_fileserve, file_size, 1, {ok, 0}),
+    meck:expect(elli_util, file_size, 1, 0),
     ?assertMatch({200,
                   [{"Content-Length", 0},
                    {"Content-Type", "application/javascript"}],
@@ -70,7 +70,7 @@ test_default_charset() ->
 test_undefined_charset() ->
     Config = [{charset, undefined}],
     meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
-    meck:expect(elli_fileserve, file_size, 1, {ok, 0}),
+    meck:expect(elli_util, file_size, 1, 0),
     ?assertMatch({200,
                   [{"Content-Length", 0},
                    {"Content-Type", "application/javascript"}],
@@ -80,7 +80,7 @@ test_undefined_charset() ->
 test_charset_config() ->
     Config = [{charset, "mycharset"}],
     meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
-    meck:expect(elli_fileserve, file_size, 1, {ok, 0}),
+    meck:expect(elli_util, file_size, 1, 0),
     ?assertMatch({200,
                   [{"Content-Length", 0},
                    {"Content-Type", "application/javascript; charset=mycharset"}],
@@ -109,7 +109,7 @@ local_path_test_() ->
                                                {default, <<"index.xhtml">>}],
                                               <<"static/">>))},
      {"Should not allow 'parent directories' in path",
-      ?_assertEqual(undefined,
+      ?_assertThrow({403, [], <<"Not Allowed">>},
                     elli_fileserve:local_path([{path, <<"/test/">>},
                                                {default, <<"index.xhtml">>}],
                                               <<"../">>))},
