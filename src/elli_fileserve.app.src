@@ -4,5 +4,10 @@
   {vsn, "0.1.0"},
   {registered, []},
   {applications, [kernel, stdlib]},
-  {env, []}
+  {env, []},
+
+  {maintainers, ["Eric Bailey", "Knut Nesheim", "Tristan Sloughter"]},
+  %% TODO: Get LICENSE from @chrisavl
+  %% {licenses, ["MIT"]},
+  {links, [{"GitHub", "https://github.com/elli-lib/elli_fileserve"}]}
  ]}.
