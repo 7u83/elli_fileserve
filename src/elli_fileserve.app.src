@@ -3,7 +3,7 @@
   {description, "Elli middleware to serve static files."},
   {vsn, "0.1.0"},
   {registered, []},
-  {applications, [kernel, stdlib]},
+  {applications, [kernel, stdlib, elli]},
   {env, []},
 
   {maintainers, ["Eric Bailey", "Knut Nesheim", "Tristan Sloughter"]},

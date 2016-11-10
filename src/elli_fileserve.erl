@@ -1,24 +1,51 @@
-%% @doc Elli fileserve overview
+%% @doc: Elli middleware for serving static files.
 %%
-%% This middleware serves static files given a URL prefix and a local path,
-%% any request containing "/../" is ignored.
+%% This middleware serves static files given a URL `prefix' and a local `path',
+%% any request containing `"/../"' is ignored.
+%% @see config().
 
 -module(elli_fileserve).
 -behaviour(elli_handler).
 
 -compile({parse_transform, ct_expand}).
 
--include_lib("kernel/include/file.hrl").
-
 -export([handle/2, handle_event/3]).
 
--import(filename, [dirname/1, extension/1, flatten/1, join/1]).
+-export_type([config/0, config_key/0]).
+
+%% @type config(). Configure `elli_fileserve' with a list of tuples of the form,
+%% `{{@link config_key()}, binary()}'.
+-type config() :: [{config_key(), binary()}].
+
+%% @type config_key().
+%% <dl>
+%%   <dt>`charset'</dt>
+%%   <dd>The charset to send in `Content-Type' headers.<br/>
+%%       <em>Default:</em>`undefined', i.e. none.</dd>
+%%   <dt>`default'</dt>
+%%   <dd>The relative file name to serve if the request path ends with `/'.<br/>
+%%       <em>Default:</em> `<<"index.html">>'</dd>
+%%   <dt>`path'</dt>
+%%   <dd>The file path to the server root.<br/>
+%%       <em>Default:</em> `<<"/tmp">>'.</dd>
+%%   <dt>`prefix'</dt>
+%%   <dd>A URL prefix to determine whether a request should be handled.<br/>
+%%       <em>Default:</em> `<<>>', i.e. handle every request.</dd>
+%% </dl>
+
+-type config_key() :: charset | default | path | prefix.
+
+-include_lib("kernel/include/file.hrl").
+
+-import(filename, [dirname/1, extension/1, join/1]).
 
 -ifdef(TEST).
 -compile([export_all]).
 -endif.
 
 
+%% TODO: write docstring
+-spec handle(elli:req(), config()) -> elli_handler:result().                                          
 handle(Req, Config) ->
     [Path|_] = binary:split(elli_request:raw_path(Req), [<<"?">>, <<"#">>]),
     case unprefix(Path, prefix(Config)) of
@@ -33,23 +60,33 @@ handle(Req, Config) ->
             end
     end.
 
-handle_event(_, _, _) -> ok.
+%% @private
+-spec handle_event(elli_handler:event(), config(), [tuple()]) -> ok.
+handle_event(_Event, _Config, _ElliConfig) -> ok.
 
 %%
 %% Config
 %%
 
+-spec default(config()) -> binary().
 default(Config) -> proplists:get_value(default, Config, <<"index.html">>).
 
+-spec path(config()) -> binary().
 path(Config) -> proplists:get_value(path, Config, <<"/tmp">>).
 
+-spec prefix(config()) -> binary().
 prefix(Config) -> proplists:get_value(prefix, Config, <<>>).
 
+-spec charset(config()) -> binary().
 charset(Config) -> proplists:get_value(charset, Config).
 
 %%
 %% Helpers
 %%
+
+-spec unprefix(RawPath, {regex, Prefix} | Prefix) -> undefined | binary() when
+      RawPath :: binary(),
+      Prefix  :: binary().
 
 unprefix(RawPath, {regex, Prefix}) ->
     case re:run(RawPath, Prefix, [{capture, all, binary}]) of
@@ -64,30 +101,34 @@ unprefix(RawPath, Prefix) ->
         _                                       -> undefined
     end.
 
+-spec local_path(config(), binary()) -> binary().
+
 local_path(Config, <<"/", File/binary>>) -> local_path(Config, File);
 
-local_path(Config, <<>>) -> join(flatten([path(Config), default(Config)]));
+local_path(Config, <<>>) -> join([path(Config), default(Config)]);
 
 local_path(Config, FilePath) ->
     MappedPath = path(Config),
     case binary:match(dirname(FilePath), <<"..">>) of
         nomatch ->
             case binary:last(FilePath) of
-                $/ -> join(flatten([MappedPath, FilePath, default(Config)]));
-                _  -> join(flatten([MappedPath, FilePath]))
+                $/ -> join([MappedPath, FilePath, default(Config)]);
+                _  -> join([MappedPath, FilePath])
             end;
         _       -> throw({403, [], <<"Not Allowed">>})
     end.
 
+-spec headers(Filename, Size, Charset) -> elli:headers() when
+      Filename :: binary(),
+      Size     :: non_neg_integer(),
+      Charset  :: binary().
 headers(Filename, Size, Charset) ->
+    SizeBin = integer_to_binary(Size),
     case mime_type(Filename) of
-        undefined -> [{"Content-Length", Size}];
-        MimeType  -> [{"Content-Length", Size},
-                      {"Content-Type", content_type(MimeType, Charset)}]
+        undefined -> [{<<"Content-Length">>, SizeBin}];
+        MimeType  -> [{<<"Content-Length">>, SizeBin},
+                      {<<"Content-Type">>, content_type(MimeType, Charset)}]
     end.
-
-content_type(MimeType, undefined) -> MimeType;
-content_type(MimeType, Charset)   -> MimeType ++ "; charset=" ++ Charset.
 
 %%
 %% Mime types
@@ -104,7 +145,15 @@ mime_type(Filename) when is_binary(Filename) ->
         <<>>               -> undefined;
         <<$., Ext/binary>> ->
             case dict:find(binary_to_list(Ext), mime_types()) of
-                {ok, MimeType} -> MimeType;
+                {ok, MimeType} -> iolist_to_binary(MimeType);
                 error          -> undefined
             end
     end.
+
+-spec content_type(MimeType, Charset) -> binary() when
+      MimeType :: binary(),
+      Charset  :: undefined | binary().
+content_type(MimeType, undefined) ->
+    MimeType;
+content_type(MimeType, Charset) ->
+    <<MimeType/binary, "; charset=", Charset/binary>>.

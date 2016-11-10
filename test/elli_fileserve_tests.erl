@@ -3,7 +3,9 @@
 
 -define(TEST_DIR, (list_to_binary(filename:dirname(code:which(?MODULE))))).
 -define(TEST_FILE, (filename:basename(list_to_binary(?FILE)))).
--define(TEST(FunName, Arg), {lists:flatten(io_lib:format("~s ~p", [FunName, Arg])), ?_test(FunName(Arg))}).
+-define(TEST(FunName, Arg),
+        {lists:flatten(io_lib:format("~s ~p", [FunName, Arg])),
+         ?_test(FunName(Arg))}).
 
 test_setup() ->
     Mods = [ [elli_request]
@@ -34,14 +36,17 @@ test_for_prefix(Prefix) ->
     Config = [{path, ?TEST_DIR}, {prefix, Prefix}],
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/../file.ext">>),
-    ?assertThrow({403, [], <<"Not Allowed">>}, elli_fileserve:handle(req, Config)),
+    ?assertThrow({403, [], <<"Not Allowed">>},
+                 elli_fileserve:handle(req, Config)),
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/non-existing-file.ext">>),
-    ?assertMatch({404, [], <<"File Not Found">>}, elli_fileserve:handle(req, Config)),
+    ?assertMatch({404, [], <<"File Not Found">>},
+                 elli_fileserve:handle(req, Config)),
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/", ?TEST_FILE/binary>>),
     ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
-    ?assertMatch({200, [{"Content-Length", _}], {file, ExpectedFile}},
+    ?assertMatch({200, [{<<"Content-Length">>, _}],
+                  {file, ExpectedFile}},
                  elli_fileserve:handle(req, Config)),
 
     meck:expect(elli_request, raw_path, 1, <<"/other/prefix/file.ext">>),
@@ -51,9 +56,10 @@ test_for_prefix(Prefix) ->
 test_for_regex_prefix(Prefix) ->
     Config = [{path, ?TEST_DIR}, {prefix, {regex, Prefix}}],
 
-    meck:expect(elli_request, raw_path, 1, <<"/deep/link/assets/", ?TEST_FILE/binary>>),
+    meck:expect(elli_request, raw_path, 1,
+                <<"/deep/link/assets/", ?TEST_FILE/binary>>),
     ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
-    ?assertMatch({200, [{"Content-Length", _}], {file, ExpectedFile}},
+    ?assertMatch({200, [{<<"Content-Length">>, _}], {file, ExpectedFile}},
                  elli_fileserve:handle(req, Config)).
 
 
@@ -62,8 +68,8 @@ test_default_charset() ->
     meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
     meck:expect(elli_util, file_size, 1, 0),
     ?assertMatch({200,
-                  [{"Content-Length", 0},
-                   {"Content-Type", "application/javascript"}],
+                  [{<<"Content-Length">>, <<"0">>},
+                   {<<"Content-Type">>, <<"application/javascript">>}],
                   {file, _}},
                  elli_fileserve:handle(req, Config)).
 
@@ -72,25 +78,28 @@ test_undefined_charset() ->
     meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
     meck:expect(elli_util, file_size, 1, 0),
     ?assertMatch({200,
-                  [{"Content-Length", 0},
-                   {"Content-Type", "application/javascript"}],
+                  [{<<"Content-Length">>, <<"0">>},
+                   {<<"Content-Type">>, <<"application/javascript">>}],
                   {file, _}},
                  elli_fileserve:handle(req, Config)).
 
 test_charset_config() ->
-    Config = [{charset, "mycharset"}],
+    Config = [{charset, <<"mycharset">>}],
     meck:expect(elli_request, raw_path, 1, <<"/test.js">>),
     meck:expect(elli_util, file_size, 1, 0),
     ?assertMatch({200,
-                  [{"Content-Length", 0},
-                   {"Content-Type", "application/javascript; charset=mycharset"}],
+                  [{<<"Content-Length">>, <<"0">>},
+                   {<<"Content-Type">>,
+                    <<"application/javascript; charset=mycharset">>}],
                   {file, _}},
                  elli_fileserve:handle(req, Config)).
 
 
 mime_type_test() ->
-    ?assertEqual("text/plain", elli_fileserve:mime_type(<<"/some/file.txt">>)),
-    ?assertEqual(undefined, elli_fileserve:mime_type(<<"/no/file/extension">>)).
+    ?assertMatch(<<"text/plain">>,
+                 elli_fileserve:mime_type(<<"/some/file.txt">>)),
+    ?assertMatch(undefined,
+                 elli_fileserve:mime_type(<<"/no/file/extension">>)).
 
 
 local_path_test_() ->
@@ -127,10 +136,13 @@ unprefix_test_() ->
                     elli_fileserve:unprefix(<<"/etc/passwd">>, <<"/">>))},
      {"Prefix",
       ?_assertEqual(<<"/etc/passwd">>,
-                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>, <<"/prefix">>))},
+                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>,
+                                            <<"/prefix">>))},
      {"Prefix",
       ?_assertEqual(<<"etc/passwd">>,
-                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>, <<"/prefix/">>))},
+                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>,
+                                            <<"/prefix/">>))},
      {"Regex prefix",
       ?_assertEqual(<<"etc/passwd">>,
-                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>, {regex, <<"^/p.+x/">>}))}].
+                    elli_fileserve:unprefix(<<"/prefix/etc/passwd">>,
+                                            {regex, <<"^/p.+x/">>}))}].
