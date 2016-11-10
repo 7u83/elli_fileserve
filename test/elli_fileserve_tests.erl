@@ -146,3 +146,7 @@ unprefix_test_() ->
       ?_assertEqual(<<"etc/passwd">>,
                     elli_fileserve:unprefix(<<"/prefix/etc/passwd">>,
                                             {regex, <<"^/p.+x/">>}))}].
+
+%% N.B. This is just for 100% coverage...
+handle_event_test_() ->
+    ?_assertMatch(ok, elli_fileserve:handle_event(elli_startup, [], [])).
