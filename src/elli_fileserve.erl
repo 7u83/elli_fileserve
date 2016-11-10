@@ -50,12 +50,19 @@ handle(Req, Config) ->
         undefined -> ignore;
         FilePath  ->
             Filename = local_path(Config, FilePath),
-            case elli_util:file_size(Filename) of
-                {error, _Reason} -> {404, [], <<"File Not Found">>};
-                Size ->
-                    {200, headers(Filename, Size, charset(Config)),
-                     {file, Filename}}
-            end
+            Modified = modified_since(Filename, Req),
+            do_handle(Filename, Modified, Config)
+    end.
+
+do_handle(_Filename, {false, Date}, _Config) ->
+    {304, [{<<"Date">>, list_to_binary(Date)}], <<>>};
+do_handle(Filename, true, Config) ->
+    case elli_util:file_size(Filename) of
+        {error, _Reason} ->
+            {404, [], <<"File Not Found">>};
+        Size ->
+            {200, headers(Filename, Size, charset(Config)),
+             {file, Filename}}
     end.
 
 %% @private
