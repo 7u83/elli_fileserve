@@ -40,7 +40,8 @@ Example config for serving local files in `/tmp` under `/prefix`, e.g.
 start_link() ->
     FileserveConfig = [{prefix, <<"/prefix">>},
                        {path, <<"/tmp">>},
-                       {charset, "utf-8"}],
+                       {charset, <<"utf-8">>},
+                       {default, <<"index.html">>}],
 
     Config = [{mods, [{elli_fileserve, FileserveConfig}]}],
 
