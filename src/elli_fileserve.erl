@@ -45,7 +45,7 @@
 
 
 %% TODO: write docstring
--spec handle(elli:req(), config()) -> elli_handler:result().                                          
+-spec handle(elli:req(), config()) -> elli_handler:result().
 handle(Req, Config) ->
     [Path|_] = binary:split(elli_request:raw_path(Req), [<<"?">>, <<"#">>]),
     case unprefix(Path, prefix(Config)) of
@@ -77,7 +77,7 @@ path(Config) -> proplists:get_value(path, Config, <<"/tmp">>).
 -spec prefix(config()) -> binary().
 prefix(Config) -> proplists:get_value(prefix, Config, <<>>).
 
--spec charset(config()) -> binary().
+-spec charset(config()) -> undefined | binary().
 charset(Config) -> proplists:get_value(charset, Config).
 
 %%
@@ -121,7 +121,7 @@ local_path(Config, FilePath) ->
 -spec headers(Filename, Size, Charset) -> elli:headers() when
       Filename :: binary(),
       Size     :: non_neg_integer(),
-      Charset  :: binary().
+      Charset  :: undefined | binary().
 headers(Filename, Size, Charset) ->
     SizeBin = integer_to_binary(Size),
     case mime_type(Filename) of
