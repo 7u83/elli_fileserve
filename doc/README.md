@@ -2,7 +2,19 @@
 
 # elli_fileserve #
 
-[![Build Status](https://travis-ci.org/elli-lib/elli_fileserve.svg?branch=master)](https://travis-ci.org/elli-lib/elli_fileserve)
+[![Build Status][Travis badge]][Travis link]
+[![Documentation][docs badge]][docs]
+[![Erlang][Erlang badge]][Erlang downloads]
+[![Coverage Status][Coveralls badge]][Coveralls link]
+
+[Travis badge]: https://travis-ci.org/elli-lib/elli_fileserve.svg?branch=develop
+[Travis link]: https://travis-ci.org/elli-lib/elli_fileserve
+[docs badge]: https://img.shields.io/badge/docs-edown-green.svg
+[docs]: https://github.com/elli-lib/elli_fileserve/blob/develop/doc/elli_fileserve.md
+[Erlang badge]: https://img.shields.io/badge/erlang-%E2%89%A518.0-red.svg
+[Erlang downloads]: http://www.erlang.org/downloads
+[Coveralls badge]: https://coveralls.io/repos/github/elli-lib/elli_fileserve/badge.svg?branch=develop
+[Coveralls link]: https://coveralls.io/github/elli-lib/elli_fileserve?branch=develop
 
 *[`elli`][] middleware to serve static files.*
 
@@ -11,8 +23,8 @@ prefix to a local folder on your server. A prefix can be of arbritrary length,
 the following are all valid prefixes: `<<"/">>`, `<<"/prefix">>`,
 `<<"/some/longer/prefix/">>`, etc.
 
-~~You can also drop in your own MIME/content types
-by editing `priv/mime.types` before compiling.~~
+You can also drop in your own MIME/content types
+by editing `priv/mime.types` before compiling.
 
 Example config for serving local files in `/tmp` under `/prefix`, e.g.
 `GET /prefix/some/file.txt` will serve `/tmp/some/file.txt`.

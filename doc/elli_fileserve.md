@@ -8,7 +8,7 @@
 
 Elli middleware for serving static files.
 
-__Behaviours:__ [`elli_handler`](https://github.com/elli-lib/elli/blob/master/doc/elli_handler.md).
+__Behaviours:__ [`elli_handler`](https://github.com/elli-lib/elli/blob/develop/doc/elli_handler.md).
 
 __See also:__ [config()](#type-config).
 
@@ -101,7 +101,7 @@ __abstract datatype__: `config_key()`
 ### handle/2 ###
 
 <pre><code>
-handle(Req::<a href="http://github.com/elli-lib/elli/blob/master/doc/elli.md#type-req">elli:req()</a>, Config::<a href="#type-config">config()</a>) -&gt; <a href="http://github.com/elli-lib/elli/blob/master/doc/elli_handler.md#type-result">elli_handler:result()</a>
+handle(Req::<a href="http://github.com/elli-lib/elli/blob/develop/doc/elli.md#type-req">elli:req()</a>, Config::<a href="#type-config">config()</a>) -&gt; <a href="http://github.com/elli-lib/elli/blob/develop/doc/elli_handler.md#type-result">elli_handler:result()</a>
 </code></pre>
 <br />
 
