@@ -69,5 +69,5 @@ Resolves to:
 
 
 <table width="100%" border="0" summary="list of modules">
-<tr><td><a href="https://github.com/elli-lib/elli_fileserve/blob/master/doc/elli_fileserve.md" class="module">elli_fileserve</a></td></tr></table>
+<tr><td><a href="elli_fileserve.md" class="module">elli_fileserve</a></td></tr></table>
 

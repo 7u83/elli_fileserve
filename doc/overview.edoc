@@ -1,0 +1,77 @@
+@title elli_fileserve
+
+@doc
+[![Build Status](https://travis-ci.org/elli-lib/elli_fileserve.svg?branch=master)](https://travis-ci.org/elli-lib/elli_fileserve)
+
+*[`elli`][] middleware to serve static files.*
+
+This middleware allows you to serve static files with [`elli'][] by mapping a
+prefix to a local folder on your server. A prefix can be of arbritrary length,
+the following are all valid prefixes: `<<"/">>', `<<"/prefix">>',
+`<<"/some/longer/prefix/">>', etc.
+
+~~You can also drop in your own MIME/content types
+by editing `priv/mime.types' before compiling.~~
+
+Example config for serving local files in `/tmp' under `/prefix', e.g.
+`GET /prefix/some/file.txt' will serve `/tmp/some/file.txt'.
+
+[`elli']: https://github.com/knutin/elli
+
+<pre lang="erlang">
+<![CDATA[
+-module(my_elli_stuff).
+-export([start_link/0]).
+
+start_link() ->
+    FileserveConfig = [{prefix, <<"/prefix">>},
+                       {path, <<"/tmp">>},
+                       {charset, "utf-8"}],
+
+    Config = [{mods, [{elli_fileserve, FileserveConfig}]}],
+
+    elli:start_link([{callback, elli_middleware},
+                     {callback_args, Config}]).
+]]>
+</pre>
+
+
+== Dynamic prefixes using regex ==
+
+If your prefix is dynamic, use regular expressions to match it. The following
+example matches all pathes that contain `/assets' somewhere.
+
+<pre lang="erlang">
+<![CDATA[
+FileserveConfig = [{prefix, {regex, <<".+/assets">>}},
+                   {path, <<"/www">>}],
+]]>
+</pre>
+
+Resolves to:
+<table>
+  <tr>
+    <th>Path</th>
+    <th>Result</th>
+  </tr>
+  <tr>
+    <td>`/foo/assets/file.zip'</td>
+    <td>`/www/file.zip'</td>
+  </tr>
+  <tr>
+    <td>`/bar/assets/file.zip'</td>
+    <td>`/www/file.zip'</td>
+  </tr>
+  <tr>
+    <td>`/assets/file.zip'</td>
+    <td>`ignore'</td>
+  </tr>
+</table>
+
+
+== TODO ==
+
+- Serve `index.html?' files for request paths ending with `/', if available.
+- Support file listing.
+
+@end
