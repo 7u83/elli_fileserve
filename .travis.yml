@@ -6,7 +6,7 @@ before_script:
 - chmod +x rebar3
 env: PATH=$PATH:.
 # script: rebar3 as test do eunit && rebar3 coveralls send
-script: rebar3 eunit && rebar3 coveralls send || cat rebar3.crashdump
+script: rebar3 eunit && rebar3 as test coveralls send || cat rebar3.crashdump
 cache:
   directories:
   - $HOME/.cache/rebar3/
