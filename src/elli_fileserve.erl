@@ -116,6 +116,32 @@ local_path(Config, FilePath) ->
         _       -> throw({403, [], <<"Not Allowed">>})
     end.
 
+-spec modified_since(Filename, Req) -> true | {false, RFC1123Date} when
+      Filename    :: binary(),
+      Req         :: elli:req(),
+      RFC1123Date :: string().
+modified_since(Filename, Req) ->
+    case elli_request:get_header(<<"If-Modified-Since">>, Req) of
+        undefined -> true;
+        Bin ->
+            DateTime = httpd_util:convert_request_date(binary_to_list(Bin)),
+            do_modified_since(Filename, DateTime)
+    end.
+
+-spec do_modified_since(Filename, DateTime) -> true | {false, RFC1123Date} when
+      Filename    :: binary(),
+      DateTime    :: bad_date | calendar:datetime(),
+      RFC1123Date :: string().
+do_modified_since(_Filename, bad_date) -> true;
+do_modified_since(Filename, DateTime) ->
+    case file:read_file_info(Filename) of
+        {error, _Reason} -> true;
+        {ok, #file_info{mtime = Mtime}} ->
+            Modified = calendar:datetime_to_gregorian_seconds(Mtime),
+            Since    = calendar:datetime_to_gregorian_seconds(DateTime),
+            (Modified > Since) orelse {false, httpd_util:rfc1123_date(Mtime)}
+    end.
+
 -spec headers(Filename, Size, Charset) -> elli:headers() when
       Filename :: binary(),
       Size     :: non_neg_integer(),
