@@ -45,7 +45,7 @@ test_for_prefix(Prefix) ->
 
     meck:expect(elli_request, raw_path, 1, <<"/prefix/", ?TEST_FILE/binary>>),
     ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
-    ?assertMatch({200, [{<<"Content-Length">>, _}],
+    ?assertMatch({200, [{<<"Content-Length">>, _}, {<<"Content-Type">>, _}],
                   {file, ExpectedFile}},
                  elli_fileserve:handle(req, Config)),
 
@@ -59,7 +59,8 @@ test_for_regex_prefix(Prefix) ->
     meck:expect(elli_request, raw_path, 1,
                 <<"/deep/link/assets/", ?TEST_FILE/binary>>),
     ExpectedFile = filename:join([?TEST_DIR, ?TEST_FILE]),
-    ?assertMatch({200, [{<<"Content-Length">>, _}], {file, ExpectedFile}},
+    ?assertMatch({200, [{<<"Content-Length">>, _}, {<<"Content-Type">>, _}],
+                  {file, ExpectedFile}},
                  elli_fileserve:handle(req, Config)).
 
 
@@ -93,14 +94,6 @@ test_charset_config() ->
                     <<"application/javascript; charset=mycharset">>}],
                   {file, _}},
                  elli_fileserve:handle(req, Config)).
-
-
-mime_type_test() ->
-    ?assertMatch(<<"text/plain">>,
-                 elli_fileserve:mime_type(<<"/some/file.txt">>)),
-    ?assertMatch(undefined,
-                 elli_fileserve:mime_type(<<"/no/file/extension">>)).
-
 
 local_path_test_() ->
     [{"Should return file asked for",

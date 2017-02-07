@@ -7,8 +7,6 @@
 -module(elli_fileserve).
 -behaviour(elli_handler).
 
--compile({parse_transform, ct_expand}).
-
 -export([handle/2, handle_event/3]).
 
 -export_type([config/0, config_key/0]).
@@ -123,32 +121,9 @@ local_path(Config, FilePath) ->
       Size     :: non_neg_integer(),
       Charset  :: undefined | binary().
 headers(Filename, Size, Charset) ->
-    SizeBin = integer_to_binary(Size),
-    case mime_type(Filename) of
-        undefined -> [{<<"Content-Length">>, SizeBin}];
-        MimeType  -> [{<<"Content-Length">>, SizeBin},
-                      {<<"Content-Type">>, content_type(MimeType, Charset)}]
-    end.
-
-%%
-%% Mime types
-%%
-
-mime_types() ->
-    ct_expand:term(
-      dict:from_list(
-        element(2, httpd_conf:load_mime_types(
-                     code:priv_dir(elli_fileserve) ++ "/mime.types")))).
-
-mime_type(Filename) when is_binary(Filename) ->
-    case extension(Filename) of
-        <<>>               -> undefined;
-        <<$., Ext/binary>> ->
-            case dict:find(binary_to_list(Ext), mime_types()) of
-                {ok, MimeType} -> iolist_to_binary(MimeType);
-                error          -> undefined
-            end
-    end.
+    MimeType = mimerl:filename(Filename),
+    [{<<"Content-Length">>, integer_to_binary(Size)},
+     {<<"Content-Type">>, content_type(MimeType, Charset)}].
 
 -spec content_type(MimeType, Charset) -> binary() when
       MimeType :: binary(),

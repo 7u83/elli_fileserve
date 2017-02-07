@@ -23,9 +23,6 @@ prefix to a local folder on your server. A prefix can be of arbritrary length,
 the following are all valid prefixes: `<<"/">>`, `<<"/prefix">>`,
 `<<"/some/longer/prefix/">>`, etc.
 
-You can also drop in your own MIME/content types
-by editing `priv/mime.types` before compiling.
-
 Example config for serving local files in `/tmp` under `/prefix`, e.g.
 `GET /prefix/some/file.txt` will serve `/tmp/some/file.txt`.
 
